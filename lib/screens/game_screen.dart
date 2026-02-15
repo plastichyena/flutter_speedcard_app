@@ -76,6 +76,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           final width = constraints.maxWidth;
           final cardWidth = AppTheme.cardWidthForScreen(width);
           final cardHeight = AppTheme.cardHeightForScreen(width);
+          final CenterPile? cpuAnimatingPile = _animatedCpuCard != null
+              ? _animatedCpuTargetPile
+              : null;
 
           final Widget layout;
           if (width < LayoutBreakpoints.mobileMaxWidth) {
@@ -83,6 +86,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               locale: locale,
               cpuDrawLabel: AppStrings.get(locale, 'cpu_draw'),
               yourDrawLabel: AppStrings.get(locale, 'your_draw'),
+              cpuAnimatingPile: cpuAnimatingPile,
               onCenterPileTap: _onCenterPileTap,
               humanHandKey: _humanHandKey,
               humanDrawPileKey: _humanDrawPileKey,
@@ -96,6 +100,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               locale: locale,
               cpuDrawLabel: AppStrings.get(locale, 'cpu_draw'),
               yourDrawLabel: AppStrings.get(locale, 'your_draw'),
+              cpuAnimatingPile: cpuAnimatingPile,
               onCenterPileTap: _onCenterPileTap,
               humanHandKey: _humanHandKey,
               humanDrawPileKey: _humanDrawPileKey,
@@ -109,6 +114,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               locale: locale,
               cpuDrawLabel: AppStrings.get(locale, 'cpu_draw'),
               yourDrawLabel: AppStrings.get(locale, 'your_draw'),
+              cpuAnimatingPile: cpuAnimatingPile,
               onCenterPileTap: _onCenterPileTap,
               humanHandKey: _humanHandKey,
               humanDrawPileKey: _humanDrawPileKey,
@@ -932,16 +938,26 @@ class _CpuPlayAnimationOverlay extends StatelessWidget {
               : rightPileX;
           final endTop = (height - cardHeight) / 2;
 
-          return AnimatedPositioned(
-            duration: _GameScreenState._cpuSlideDuration,
-            curve: Curves.easeInOutCubic,
-            left: isSliding ? endLeft : startLeft,
-            top: isSliding ? endTop : startTop,
-            child: CardWidget(
-              card: card,
-              isFaceUp: true,
-              width: cardWidth,
-              height: cardHeight,
+          return SizedBox.expand(
+            child: Stack(
+              children: [
+                AnimatedPositioned(
+                  duration: _GameScreenState._cpuSlideDuration,
+                  curve: Curves.easeInOutCubic,
+                  left: isSliding ? endLeft : startLeft,
+                  top: isSliding ? endTop : startTop,
+                  width: cardWidth,
+                  height: cardHeight,
+                  child: RepaintBoundary(
+                    child: CardWidget(
+                      card: card,
+                      isFaceUp: true,
+                      width: cardWidth,
+                      height: cardHeight,
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
         },

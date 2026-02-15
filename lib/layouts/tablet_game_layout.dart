@@ -17,6 +17,7 @@ class TabletGameLayout extends ConsumerWidget {
     required this.locale,
     required this.cpuDrawLabel,
     required this.yourDrawLabel,
+    this.cpuAnimatingPile,
     required this.onCenterPileTap,
     this.humanHandKey,
     this.humanDrawPileKey,
@@ -29,6 +30,7 @@ class TabletGameLayout extends ConsumerWidget {
   final AppLocale locale;
   final String cpuDrawLabel;
   final String yourDrawLabel;
+  final CenterPile? cpuAnimatingPile;
   final ValueChanged<CenterPile> onCenterPileTap;
   final Key? humanHandKey;
   final Key? humanDrawPileKey;
@@ -48,8 +50,15 @@ class TabletGameLayout extends ConsumerWidget {
     final cardWidth = AppTheme.cardWidthForScreen(screenWidth);
     final cardHeight = AppTheme.cardHeightForScreen(screenWidth);
     final selectedCard = _selectedCard(state);
-    final leftFieldCard = state.centerLeftPile.lastOrNull;
-    final rightFieldCard = state.centerRightPile.lastOrNull;
+    final leftFieldCard =
+        cpuAnimatingPile == CenterPile.left && state.centerLeftPile.length >= 2
+        ? state.centerLeftPile[state.centerLeftPile.length - 2]
+        : state.centerLeftPile.lastOrNull;
+    final rightFieldCard =
+        cpuAnimatingPile == CenterPile.right &&
+            state.centerRightPile.length >= 2
+        ? state.centerRightPile[state.centerRightPile.length - 2]
+        : state.centerRightPile.lastOrNull;
 
     final canPlay = state.phase == GamePhase.playing;
     final leftIsValid = _isValidTarget(selectedCard, leftFieldCard);
