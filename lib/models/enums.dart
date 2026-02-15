@@ -29,3 +29,5 @@ enum Player { human, cpu }
 enum CenterPile { left, right }
 
 enum GameResult { humanWin, cpuWin, draw }
+
+enum AppLocale { ja, en }

@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/enums.dart';
 
 class GamePhaseIndicator extends StatelessWidget {
-  const GamePhaseIndicator({super.key, required this.phase});
+  const GamePhaseIndicator({
+    super.key,
+    required this.phase,
+    required this.locale,
+  });
 
   final GamePhase phase;
+  final AppLocale locale;
 
   @override
   Widget build(BuildContext context) {
     final Color color = _phaseColor(phase);
 
     return Chip(
-      label: Text(_phaseLabel(phase)),
+      label: Text(_phaseLabel(locale, phase)),
       backgroundColor: color.withValues(alpha: 0.2),
       side: BorderSide(color: color),
       labelStyle: const TextStyle(
@@ -23,12 +29,12 @@ class GamePhaseIndicator extends StatelessWidget {
   }
 }
 
-String _phaseLabel(GamePhase phase) {
+String _phaseLabel(AppLocale locale, GamePhase phase) {
   return switch (phase) {
-    GamePhase.ready => 'Ready',
-    GamePhase.playing => 'Playing',
-    GamePhase.stalemate => 'Stalemate',
-    GamePhase.finished => 'Finished',
+    GamePhase.ready => AppStrings.get(locale, 'phase_ready'),
+    GamePhase.playing => AppStrings.get(locale, 'phase_playing'),
+    GamePhase.stalemate => AppStrings.get(locale, 'phase_stalemate'),
+    GamePhase.finished => AppStrings.get(locale, 'phase_finished'),
   };
 }
 

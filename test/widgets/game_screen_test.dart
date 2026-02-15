@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_speedcard_app/l10n/app_strings.dart';
 import 'package:flutter_speedcard_app/models/card.dart';
 import 'package:flutter_speedcard_app/models/enums.dart';
 import 'package:flutter_speedcard_app/models/game_state.dart';
 import 'package:flutter_speedcard_app/providers/game_provider.dart';
+import 'package:flutter_speedcard_app/providers/locale_provider.dart';
 import 'package:flutter_speedcard_app/screens/game_screen.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -32,12 +34,24 @@ GameState testState({required GamePhase phase, GameResult? result}) {
   );
 }
 
-Widget buildGameScreen([GameState? overrideState, Key? key]) {
+Widget buildGameScreen([
+  GameState? overrideState,
+  Key? key,
+  AppLocale? localeOverride,
+]) {
+  final overrides = <Override>[];
+  if (overrideState != null) {
+    overrides.add(
+      gameProvider.overrideWith(() => _FixedGameNotifier(overrideState)),
+    );
+  }
+  if (localeOverride != null) {
+    overrides.add(localeProvider.overrideWith((ref) => localeOverride));
+  }
+
   return ProviderScope(
     key: key,
-    overrides: overrideState == null
-        ? const []
-        : [gameProvider.overrideWith(() => _FixedGameNotifier(overrideState))],
+    overrides: overrides,
     child: const MaterialApp(home: GameScreen()),
   );
 }
@@ -50,7 +64,10 @@ void main() {
     await tester.pump();
 
     expect(find.byType(GameScreen), findsOneWidget);
-    expect(find.text('Ready'), findsOneWidget);
+    expect(
+      find.text(AppStrings.get(AppLocale.ja, 'phase_ready')),
+      findsOneWidget,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -62,8 +79,14 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Stalemate!'), findsOneWidget);
-    expect(find.text('Resume (Reset)'), findsOneWidget);
+    expect(
+      find.text(AppStrings.get(AppLocale.ja, 'stalemate_title')),
+      findsOneWidget,
+    );
+    expect(
+      find.text(AppStrings.get(AppLocale.ja, 'stalemate_button')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('finished overlay is shown at finished phase', (
@@ -76,8 +99,11 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('You Win!'), findsOneWidget);
-    expect(find.text('Restart'), findsOneWidget);
+    expect(
+      find.text(AppStrings.get(AppLocale.ja, 'result_human_win')),
+      findsOneWidget,
+    );
+    expect(find.text(AppStrings.get(AppLocale.ja, 'restart')), findsOneWidget);
   });
 
   testWidgets('result text shows win message', (WidgetTester tester) async {
@@ -89,7 +115,10 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('You Win!'), findsOneWidget);
+    expect(
+      find.text(AppStrings.get(AppLocale.ja, 'result_human_win')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('result text shows lose message', (WidgetTester tester) async {
@@ -101,7 +130,10 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('You Lose!'), findsOneWidget);
+    expect(
+      find.text(AppStrings.get(AppLocale.ja, 'result_cpu_win')),
+      findsOneWidget,
+    );
   });
 
   testWidgets('result text shows draw message', (WidgetTester tester) async {
@@ -113,6 +145,50 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Draw!'), findsOneWidget);
+    expect(
+      find.text(AppStrings.get(AppLocale.ja, 'result_draw')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('stalemate overlay uses English locale when selected', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      buildGameScreen(
+        testState(phase: GamePhase.stalemate),
+        const ValueKey<String>('stalemate-en'),
+        AppLocale.en,
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.text(AppStrings.get(AppLocale.en, 'stalemate_title')),
+      findsOneWidget,
+    );
+    expect(
+      find.text(AppStrings.get(AppLocale.en, 'stalemate_button')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('finished overlay uses English locale when selected', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      buildGameScreen(
+        testState(phase: GamePhase.finished, result: GameResult.cpuWin),
+        const ValueKey<String>('finished-en'),
+        AppLocale.en,
+      ),
+    );
+    await tester.pump();
+
+    expect(
+      find.text(AppStrings.get(AppLocale.en, 'result_cpu_win')),
+      findsOneWidget,
+    );
+    expect(find.text(AppStrings.get(AppLocale.en, 'restart')), findsOneWidget);
   });
 }

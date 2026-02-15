@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speedcard_app/constants/game_constants.dart';
+import 'package:flutter_speedcard_app/l10n/app_strings.dart';
 import 'package:flutter_speedcard_app/layouts/desktop_game_layout.dart';
 import 'package:flutter_speedcard_app/layouts/mobile_game_layout.dart';
 import 'package:flutter_speedcard_app/layouts/tablet_game_layout.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_speedcard_app/models/enums.dart';
 import 'package:flutter_speedcard_app/models/game_state.dart';
 import 'package:flutter_speedcard_app/providers/cpu_timer_provider.dart';
 import 'package:flutter_speedcard_app/providers/game_provider.dart';
+import 'package:flutter_speedcard_app/providers/locale_provider.dart';
 import 'package:flutter_speedcard_app/theme/app_theme.dart';
 import 'package:flutter_speedcard_app/widgets/card_hand.dart';
 import 'package:flutter_speedcard_app/widgets/card_widget.dart';
@@ -63,6 +65,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(gameProvider);
+    final locale = ref.watch(localeProvider);
     ref.listen<GameState>(gameProvider, _onGameStateChanged);
 
     final bool reduceMotion = MediaQuery.of(context).disableAnimations;
@@ -77,6 +80,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           final Widget layout;
           if (width < LayoutBreakpoints.mobileMaxWidth) {
             layout = MobileGameLayout(
+              locale: locale,
+              cpuDrawLabel: AppStrings.get(locale, 'cpu_draw'),
+              yourDrawLabel: AppStrings.get(locale, 'your_draw'),
               onCenterPileTap: _onCenterPileTap,
               humanHandKey: _humanHandKey,
               humanDrawPileKey: _humanDrawPileKey,
@@ -87,6 +93,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             );
           } else if (width < LayoutBreakpoints.desktopMinWidth) {
             layout = TabletGameLayout(
+              locale: locale,
+              cpuDrawLabel: AppStrings.get(locale, 'cpu_draw'),
+              yourDrawLabel: AppStrings.get(locale, 'your_draw'),
               onCenterPileTap: _onCenterPileTap,
               humanHandKey: _humanHandKey,
               humanDrawPileKey: _humanDrawPileKey,
@@ -97,6 +106,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             );
           } else {
             layout = DesktopGameLayout(
+              locale: locale,
+              cpuDrawLabel: AppStrings.get(locale, 'cpu_draw'),
+              yourDrawLabel: AppStrings.get(locale, 'your_draw'),
               onCenterPileTap: _onCenterPileTap,
               humanHandKey: _humanHandKey,
               humanDrawPileKey: _humanDrawPileKey,
@@ -151,7 +163,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     transitionBuilder: (child, animation) {
                       return FadeTransition(opacity: animation, child: child);
                     },
-                    child: _buildStatusOverlay(state),
+                    child: _buildStatusOverlay(state, locale),
                   ),
                 ),
               ),
@@ -643,12 +655,12 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     });
   }
 
-  Widget _buildStatusOverlay(GameState state) {
+  Widget _buildStatusOverlay(GameState state, AppLocale locale) {
     if (state.phase == GamePhase.stalemate) {
       return _StatusOverlay(
         key: const ValueKey<String>('status-stalemate'),
-        title: 'Stalemate!',
-        buttonLabel: 'Resume (Reset)',
+        title: AppStrings.get(locale, 'stalemate_title'),
+        buttonLabel: AppStrings.get(locale, 'stalemate_button'),
         onPressed: () {
           ref.read(gameProvider.notifier).resetStalemate();
         },
@@ -658,8 +670,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     if (state.phase == GamePhase.finished) {
       return _StatusOverlay(
         key: const ValueKey<String>('status-finished'),
-        title: _resultText(state.result),
-        buttonLabel: 'Restart',
+        title: _resultText(state.result, locale),
+        buttonLabel: AppStrings.get(locale, 'restart'),
         onPressed: _restartToTitle,
       );
     }
@@ -948,12 +960,12 @@ class _CpuPlayAnimationOverlay extends StatelessWidget {
   }
 }
 
-String _resultText(GameResult? result) {
+String _resultText(GameResult? result, AppLocale locale) {
   return switch (result) {
-    GameResult.humanWin => 'You Win!',
-    GameResult.cpuWin => 'You Lose!',
-    GameResult.draw => 'Draw!',
-    null => 'Game Over',
+    GameResult.humanWin => AppStrings.get(locale, 'result_human_win'),
+    GameResult.cpuWin => AppStrings.get(locale, 'result_cpu_win'),
+    GameResult.draw => AppStrings.get(locale, 'result_draw'),
+    null => AppStrings.get(locale, 'phase_finished'),
   };
 }
 

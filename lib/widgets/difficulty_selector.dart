@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/enums.dart';
 import '../theme/app_theme.dart';
 
 class DifficultySelector extends StatelessWidget {
   const DifficultySelector({
     super.key,
+    required this.locale,
     required this.selected,
     required this.onChanged,
   });
 
+  final AppLocale locale;
   final Difficulty selected;
   final ValueChanged<Difficulty> onChanged;
 
@@ -23,7 +26,7 @@ class DifficultySelector extends StatelessWidget {
         return ConstrainedBox(
           constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           child: ChoiceChip(
-            label: Text(_difficultyLabel(difficulty)),
+            label: Text(_difficultyLabel(locale, difficulty)),
             selected: isSelected,
             showCheckmark: false,
             selectedColor: AppTheme.selectedCardBorder.withValues(alpha: 0.35),
@@ -44,10 +47,10 @@ class DifficultySelector extends StatelessWidget {
   }
 }
 
-String _difficultyLabel(Difficulty difficulty) {
+String _difficultyLabel(AppLocale locale, Difficulty difficulty) {
   return switch (difficulty) {
-    Difficulty.easy => 'Easy',
-    Difficulty.normal => 'Normal',
-    Difficulty.hard => 'Hard',
+    Difficulty.easy => AppStrings.get(locale, 'easy'),
+    Difficulty.normal => AppStrings.get(locale, 'normal'),
+    Difficulty.hard => AppStrings.get(locale, 'hard'),
   };
 }

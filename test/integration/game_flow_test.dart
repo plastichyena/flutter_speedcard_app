@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speedcard_app/app.dart';
+import 'package:flutter_speedcard_app/l10n/app_strings.dart';
 import 'package:flutter_speedcard_app/models/card.dart';
 import 'package:flutter_speedcard_app/models/enums.dart';
 import 'package:flutter_speedcard_app/models/game_state.dart';
@@ -51,18 +52,24 @@ void main() {
   ) async {
     await tester.pumpWidget(const ProviderScope(child: SpeedCardApp()));
 
-    expect(find.text('Speed'), findsOneWidget);
-    expect(find.text('Start Game'), findsOneWidget);
+    expect(
+      find.text(AppStrings.get(AppLocale.ja, 'app_title')),
+      findsOneWidget,
+    );
+    expect(
+      find.text(AppStrings.get(AppLocale.ja, 'start_game')),
+      findsOneWidget,
+    );
 
-    await tester.tap(find.text('Hard'));
+    await tester.tap(find.text(AppStrings.get(AppLocale.ja, 'hard')));
     await tester.pump();
 
-    await tester.tap(find.text('Start Game'));
+    await tester.tap(find.text(AppStrings.get(AppLocale.ja, 'start_game')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.byType(GameScreen), findsOneWidget);
-    expect(find.text('Start Game'), findsNothing);
+    expect(find.text(AppStrings.get(AppLocale.ja, 'start_game')), findsNothing);
   });
 
   testWidgets('stalemate reset flow transitions back to active game', (
@@ -83,13 +90,21 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('Stalemate!'), findsOneWidget);
+    expect(
+      find.text(AppStrings.get(AppLocale.ja, 'stalemate_title')),
+      findsOneWidget,
+    );
 
-    await tester.tap(find.text('Resume (Reset)'));
+    await tester.tap(
+      find.text(AppStrings.get(AppLocale.ja, 'stalemate_button')),
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
 
-    expect(find.text('Stalemate!'), findsNothing);
+    expect(
+      find.text(AppStrings.get(AppLocale.ja, 'stalemate_title')),
+      findsNothing,
+    );
     expect(container.read(gameProvider).phase, GamePhase.playing);
   });
 
@@ -120,5 +135,30 @@ void main() {
     await tester.tap(find.text('8').first);
     await tester.pump();
     expect(container.read(gameProvider).selectedCardIndex, isNull);
+  });
+
+  testWidgets('English locale persists from title to game screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const ProviderScope(child: SpeedCardApp()));
+
+    await tester.tap(find.text('EN'));
+    await tester.pump();
+
+    expect(
+      find.text(AppStrings.get(AppLocale.en, 'start_game')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text(AppStrings.get(AppLocale.en, 'start_game')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byType(GameScreen), findsOneWidget);
+    expect(find.text(AppStrings.get(AppLocale.en, 'cpu_draw')), findsOneWidget);
+    expect(
+      find.text(AppStrings.get(AppLocale.en, 'your_draw')),
+      findsOneWidget,
+    );
   });
 }

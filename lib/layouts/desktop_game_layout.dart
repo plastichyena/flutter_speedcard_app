@@ -14,6 +14,9 @@ import 'package:flutter_speedcard_app/widgets/game_phase_indicator.dart';
 class DesktopGameLayout extends ConsumerWidget {
   const DesktopGameLayout({
     super.key,
+    required this.locale,
+    required this.cpuDrawLabel,
+    required this.yourDrawLabel,
     required this.onCenterPileTap,
     this.humanHandKey,
     this.humanDrawPileKey,
@@ -23,6 +26,9 @@ class DesktopGameLayout extends ConsumerWidget {
     this.shakeEpoch = 0,
   });
 
+  final AppLocale locale;
+  final String cpuDrawLabel;
+  final String yourDrawLabel;
   final ValueChanged<CenterPile> onCenterPileTap;
   final Key? humanHandKey;
   final Key? humanDrawPileKey;
@@ -66,7 +72,7 @@ class DesktopGameLayout extends ConsumerWidget {
                 const SizedBox(height: 14),
                 DrawPileIndicator(
                   remainingCount: state.cpuDrawPile.length,
-                  label: 'CPU Draw',
+                  label: cpuDrawLabel,
                 ),
                 const SizedBox(height: 34),
                 Row(
@@ -99,7 +105,7 @@ class DesktopGameLayout extends ConsumerWidget {
                 DrawPileIndicator(
                   key: humanDrawPileKey,
                   remainingCount: state.humanDrawPile.length,
-                  label: 'Your Draw',
+                  label: yourDrawLabel,
                 ),
                 const SizedBox(height: 14),
                 CardHand(
@@ -123,7 +129,7 @@ class DesktopGameLayout extends ConsumerWidget {
                   cardHeight: cardHeight,
                 ),
                 const SizedBox(height: 18),
-                GamePhaseIndicator(phase: state.phase),
+                GamePhaseIndicator(phase: state.phase, locale: locale),
               ],
             ),
           ),

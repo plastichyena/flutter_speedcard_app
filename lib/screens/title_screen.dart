@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_speedcard_app/l10n/app_strings.dart';
 import 'package:flutter_speedcard_app/models/enums.dart';
 import 'package:flutter_speedcard_app/providers/game_provider.dart';
+import 'package:flutter_speedcard_app/providers/locale_provider.dart';
 import 'package:flutter_speedcard_app/screens/game_screen.dart';
 import 'package:flutter_speedcard_app/widgets/difficulty_selector.dart';
 
@@ -19,6 +21,7 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
   @override
   Widget build(BuildContext context) {
     final bool reduceMotion = MediaQuery.of(context).disableAnimations;
+    final locale = ref.watch(localeProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -30,8 +33,15 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Speed',
+                  _LanguageToggle(
+                    locale: locale,
+                    onChanged: (nextLocale) {
+                      ref.read(localeProvider.notifier).state = nextLocale;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    AppStrings.get(locale, 'app_title'),
                     style: TextStyle(
                       fontSize: 56,
                       fontWeight: FontWeight.w800,
@@ -41,6 +51,7 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
                   ),
                   const SizedBox(height: 32),
                   DifficultySelector(
+                    locale: locale,
                     selected: _selectedDifficulty,
                     onChanged: (difficulty) {
                       setState(() {
@@ -68,8 +79,8 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
                                     strokeWidth: 2,
                                   ),
                                 )
-                              : const Text(
-                                  'Start Game',
+                              : Text(
+                                  AppStrings.get(locale, 'start_game'),
                                   key: ValueKey<String>('start'),
                                 ),
                         ),
@@ -124,6 +135,43 @@ class _TitleScreenState extends ConsumerState<TitleScreen> {
         );
         return FadeTransition(opacity: curved, child: child);
       },
+    );
+  }
+}
+
+class _LanguageToggle extends StatelessWidget {
+  const _LanguageToggle({required this.locale, required this.onChanged});
+
+  final AppLocale locale;
+  final ValueChanged<AppLocale> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: ToggleButtons(
+        constraints: const BoxConstraints(minWidth: 56, minHeight: 44),
+        borderRadius: BorderRadius.circular(10),
+        borderColor: Colors.white54,
+        selectedBorderColor: Colors.white,
+        color: Colors.white,
+        selectedColor: Colors.black87,
+        fillColor: Colors.white.withValues(alpha: 0.9),
+        isSelected: <bool>[locale == AppLocale.ja, locale == AppLocale.en],
+        onPressed: (index) {
+          onChanged(index == 0 ? AppLocale.ja : AppLocale.en);
+        },
+        children: const [
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 8),
+            child: Text('日本語'),
+          ),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Text('EN'),
+          ),
+        ],
+      ),
     );
   }
 }

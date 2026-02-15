@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_speedcard_app/constants/game_constants.dart';
 import 'package:flutter_speedcard_app/logic/card_utils.dart';
 import 'package:flutter_speedcard_app/logic/stalemate_checker.dart';
@@ -5,6 +7,8 @@ import 'package:flutter_speedcard_app/models/card.dart';
 import 'package:flutter_speedcard_app/models/enums.dart';
 import 'package:flutter_speedcard_app/models/game_event.dart';
 import 'package:flutter_speedcard_app/models/game_state.dart';
+
+final _random = Random();
 
 /// Pure reducer: takes current state + event, returns new state.
 GameState reduce(GameState state, GameEvent event) {
@@ -206,16 +210,27 @@ GameState _resetStalemate(GameState state) {
   final humanDraw = List<PlayingCard>.from(state.humanDrawPile);
   final cpuDraw = List<PlayingCard>.from(state.cpuDrawPile);
 
+  final humanHand = List<PlayingCard>.from(state.humanHand);
+  final cpuHand = List<PlayingCard>.from(state.cpuHand);
+
   if (humanDraw.isNotEmpty) {
     leftPile.add(humanDraw.removeLast());
+  } else if (humanHand.isNotEmpty) {
+    final index = _random.nextInt(humanHand.length);
+    leftPile.add(humanHand.removeAt(index));
   }
   if (cpuDraw.isNotEmpty) {
     rightPile.add(cpuDraw.removeLast());
+  } else if (cpuHand.isNotEmpty) {
+    final index = _random.nextInt(cpuHand.length);
+    rightPile.add(cpuHand.removeAt(index));
   }
 
   var afterSupplyState = state.copyWith(
     centerLeftPile: leftPile,
     centerRightPile: rightPile,
+    humanHand: humanHand,
+    cpuHand: cpuHand,
     humanDrawPile: humanDraw,
     cpuDrawPile: cpuDraw,
     selectedCardIndex: null,

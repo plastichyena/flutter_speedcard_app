@@ -28,6 +28,7 @@ class AppTheme {
   static const Color blackSuit = Color(0xFF212121);
 
   static const Color tableBackground = Color(0xFF2E7D32);
+  static const Color buttonBackground = Color(0xFFDA7756);
 
   static const Duration cardPlacementDuration =
       AnimationDurations.cardPlacement;
@@ -68,6 +69,12 @@ class AppTheme {
       colorScheme: colorScheme,
       useMaterial3: true,
       scaffoldBackgroundColor: tableBackground,
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: buttonBackground,
+          foregroundColor: Colors.white,
+        ),
+      ),
     );
   }
 }
