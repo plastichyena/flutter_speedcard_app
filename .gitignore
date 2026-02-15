@@ -1,0 +1,8 @@
+# agent set 
+Doc/
+.serena/
+.claude/
+.agents/
+.mcp.json
+AGENTS.md
+CLAUDE.md
