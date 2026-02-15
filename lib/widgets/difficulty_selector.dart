@@ -32,7 +32,9 @@ class DifficultySelector extends StatelessWidget {
             selectedColor: AppTheme.selectedCardBorder.withValues(alpha: 0.35),
             backgroundColor: Colors.white.withValues(alpha: 0.12),
             side: BorderSide(
-              color: isSelected ? AppTheme.selectedCardBorder : Colors.white30,
+              color: isSelected
+                  ? const Color.fromARGB(234, 255, 8, 0)
+                  : Colors.white30,
             ),
             materialTapTargetSize: MaterialTapTargetSize.padded,
             labelStyle: TextStyle(
