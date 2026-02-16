@@ -13,7 +13,11 @@ final _random = Random();
 /// Pure reducer: takes current state + event, returns new state.
 GameState reduce(GameState state, GameEvent event) {
   if (event is StartGame) {
-    return dealInitialState(event.difficulty);
+    final initial = dealInitialState(event.difficulty);
+    if (isStalemate(initial)) {
+      return initial.copyWith(phase: GamePhase.stalemate);
+    }
+    return initial;
   }
 
   if (event is RestartGame) {
@@ -156,7 +160,7 @@ GameState _playCard(
         : baseState.cpuDrawPile,
   );
   if (drawPile.isNotEmpty && hand.length < GameConstants.maxHandSize) {
-    hand.add(drawPile.removeLast());
+    hand.insert(event.cardIndex, drawPile.removeLast());
   }
 
   var nextState = event.player == Player.human

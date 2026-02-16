@@ -38,7 +38,7 @@ class DifficultySelector extends StatelessWidget {
             ),
             materialTapTargetSize: MaterialTapTargetSize.padded,
             labelStyle: TextStyle(
-              color: Colors.white,
+              color: Colors.black,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             ),
             onSelected: (_) => onChanged(difficulty),
