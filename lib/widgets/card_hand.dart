@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart'
+    show TargetPlatform, defaultTargetPlatform, kIsWeb;
 
 import '../models/card.dart';
 import '../models/hand_card_drag_data.dart';
@@ -40,6 +42,21 @@ class CardHand extends StatelessWidget {
   final double cardWidth;
   final double cardHeight;
 
+  bool _isDesktopOrWeb() {
+    if (kIsWeb) {
+      return true;
+    }
+
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.windows:
+      case TargetPlatform.macOS:
+      case TargetPlatform.linux:
+        return true;
+      default:
+        return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (cards.isEmpty) {
@@ -47,6 +64,7 @@ class CardHand extends StatelessWidget {
     }
 
     final totalWidth = cardWidth + ((cards.length - 1) * (cardWidth - overlap));
+    final bool useImmediateDrag = _isDesktopOrWeb();
 
     return SizedBox(
       width: totalWidth,
@@ -72,34 +90,69 @@ class CardHand extends StatelessWidget {
             left: index * (cardWidth - overlap),
             bottom: 0,
             child: enableDrag
-                ? LongPressDraggable<HandCardDragData>(
-                    data: HandCardDragData(
-                      cardIndex: index,
-                      card: cards[index],
-                      tickId: tickId,
-                    ),
-                    onDragStarted: () => onDragStarted?.call(index),
-                    onDragEnd: (_) => onDragEnd?.call(),
-                    feedback: Material(
-                      type: MaterialType.transparency,
-                      child: SizedBox(
-                        width: cardWidth,
-                        height: cardHeight,
-                        child: CardWidget(
-                          card: cards[index],
-                          isFaceUp: isFaceUp,
-                          isSelected: false,
-                          isDimmed: isDimmed,
-                          shouldShake: false,
-                          shakeEpoch: shakeEpoch,
-                          width: cardWidth,
-                          height: cardHeight,
-                        ),
-                      ),
-                    ),
-                    childWhenDragging: Opacity(opacity: 0.3, child: cardWidget),
-                    child: cardWidget,
-                  )
+                ? (useImmediateDrag
+                      ? Draggable<HandCardDragData>(
+                          data: HandCardDragData(
+                            cardIndex: index,
+                            card: cards[index],
+                            tickId: tickId,
+                          ),
+                          onDragStarted: () => onDragStarted?.call(index),
+                          onDragEnd: (_) => onDragEnd?.call(),
+                          feedback: Material(
+                            type: MaterialType.transparency,
+                            child: SizedBox(
+                              width: cardWidth,
+                              height: cardHeight,
+                              child: CardWidget(
+                                card: cards[index],
+                                isFaceUp: isFaceUp,
+                                isSelected: false,
+                                isDimmed: isDimmed,
+                                shouldShake: false,
+                                shakeEpoch: shakeEpoch,
+                                width: cardWidth,
+                                height: cardHeight,
+                              ),
+                            ),
+                          ),
+                          childWhenDragging: Opacity(
+                            opacity: 0.3,
+                            child: cardWidget,
+                          ),
+                          child: cardWidget,
+                        )
+                      : LongPressDraggable<HandCardDragData>(
+                          data: HandCardDragData(
+                            cardIndex: index,
+                            card: cards[index],
+                            tickId: tickId,
+                          ),
+                          onDragStarted: () => onDragStarted?.call(index),
+                          onDragEnd: (_) => onDragEnd?.call(),
+                          feedback: Material(
+                            type: MaterialType.transparency,
+                            child: SizedBox(
+                              width: cardWidth,
+                              height: cardHeight,
+                              child: CardWidget(
+                                card: cards[index],
+                                isFaceUp: isFaceUp,
+                                isSelected: false,
+                                isDimmed: isDimmed,
+                                shouldShake: false,
+                                shakeEpoch: shakeEpoch,
+                                width: cardWidth,
+                                height: cardHeight,
+                              ),
+                            ),
+                          ),
+                          childWhenDragging: Opacity(
+                            opacity: 0.3,
+                            child: cardWidget,
+                          ),
+                          child: cardWidget,
+                        ))
                 : cardWidget,
           );
         }),
