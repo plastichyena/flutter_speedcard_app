@@ -34,6 +34,50 @@ GameState playingState({
 }
 
 void main() {
+  group('canPlayCard', () {
+    test('returns true when human card can be played on pile', () {
+      final state = playingState(
+        humanHand: [card(Suit.spade, Rank.eight)],
+        cpuHand: [card(Suit.heart, Rank.jack)],
+        humanDraw: [],
+        cpuDraw: [],
+        leftPile: [card(Suit.club, Rank.seven)],
+        rightPile: [card(Suit.heart, Rank.queen)],
+      );
+
+      expect(canPlayCard(state, 0, CenterPile.left), isTrue);
+    });
+
+    test('returns false when phase is not playing', () {
+      final state = playingState(
+        humanHand: [card(Suit.spade, Rank.eight)],
+        cpuHand: [card(Suit.heart, Rank.jack)],
+        humanDraw: [],
+        cpuDraw: [],
+        leftPile: [card(Suit.club, Rank.seven)],
+        rightPile: [card(Suit.heart, Rank.queen)],
+        phase: GamePhase.ready,
+      );
+
+      expect(canPlayCard(state, 0, CenterPile.left), isFalse);
+    });
+
+    test('returns false when index is invalid or pile is empty', () {
+      final state = playingState(
+        humanHand: [card(Suit.spade, Rank.eight)],
+        cpuHand: [card(Suit.heart, Rank.jack)],
+        humanDraw: [],
+        cpuDraw: [],
+        leftPile: [],
+        rightPile: [card(Suit.heart, Rank.queen)],
+      );
+
+      expect(canPlayCard(state, -1, CenterPile.right), isFalse);
+      expect(canPlayCard(state, 1, CenterPile.right), isFalse);
+      expect(canPlayCard(state, 0, CenterPile.left), isFalse);
+    });
+  });
+
   group('reduce', () {
     test('StartGame creates correct initial state', () {
       final next = reduce(

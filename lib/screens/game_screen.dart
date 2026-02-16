@@ -10,6 +10,7 @@ import 'package:flutter_speedcard_app/layouts/tablet_game_layout.dart';
 import 'package:flutter_speedcard_app/models/card.dart';
 import 'package:flutter_speedcard_app/models/enums.dart';
 import 'package:flutter_speedcard_app/models/game_state.dart';
+import 'package:flutter_speedcard_app/models/hand_card_drag_data.dart';
 import 'package:flutter_speedcard_app/providers/cpu_timer_provider.dart';
 import 'package:flutter_speedcard_app/providers/game_provider.dart';
 import 'package:flutter_speedcard_app/providers/locale_provider.dart';
@@ -48,6 +49,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   int _nextAnimationId = 1;
   int? _invalidShakeCardIndex;
   int _invalidShakeEpoch = 0;
+  int? _draggingCardIndex;
   List<_CardTravelAnimation> _humanPlacementAnimations =
       const <_CardTravelAnimation>[];
   List<_CardTravelAnimation> _humanDrawAnimations =
@@ -94,6 +96,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               rightCenterPileKey: _rightCenterPileKey,
               shakeCardIndex: _invalidShakeCardIndex,
               shakeEpoch: _invalidShakeEpoch,
+              draggingCardIndex: _draggingCardIndex,
+              tickId: state.tickId,
+              onCardDragStarted: _onCardDragStarted,
+              onCardDragEnd: _onCardDragEnd,
+              onCardDropOnPile: _onCardDropOnPile,
             );
           } else if (width < LayoutBreakpoints.desktopMinWidth) {
             layout = TabletGameLayout(
@@ -108,6 +115,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               rightCenterPileKey: _rightCenterPileKey,
               shakeCardIndex: _invalidShakeCardIndex,
               shakeEpoch: _invalidShakeEpoch,
+              draggingCardIndex: _draggingCardIndex,
+              tickId: state.tickId,
+              onCardDragStarted: _onCardDragStarted,
+              onCardDragEnd: _onCardDragEnd,
+              onCardDropOnPile: _onCardDropOnPile,
             );
           } else {
             layout = DesktopGameLayout(
@@ -122,6 +134,11 @@ class _GameScreenState extends ConsumerState<GameScreen> {
               rightCenterPileKey: _rightCenterPileKey,
               shakeCardIndex: _invalidShakeCardIndex,
               shakeEpoch: _invalidShakeEpoch,
+              draggingCardIndex: _draggingCardIndex,
+              tickId: state.tickId,
+              onCardDragStarted: _onCardDragStarted,
+              onCardDragEnd: _onCardDragEnd,
+              onCardDropOnPile: _onCardDropOnPile,
             );
           }
 
@@ -187,21 +204,30 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     super.dispose();
   }
 
-  void _onCenterPileTap(CenterPile targetPile) {
+  /// Attempt to play a human card from either tap or drag flow.
+  void _attemptHumanPlay(
+    int cardIndex,
+    CenterPile targetPile, {
+    bool isDragSource = false,
+  }) {
     final before = ref.read(gameProvider);
-    final selectedIndex = before.selectedCardIndex;
-    if (before.phase != GamePhase.playing || selectedIndex == null) {
+    if (before.phase != GamePhase.playing) {
       return;
     }
-    if (selectedIndex < 0 || selectedIndex >= before.humanHand.length) {
+    if (cardIndex < 0 || cardIndex >= before.humanHand.length) {
+      return;
+    }
+    if (!isDragSource &&
+        _draggingCardIndex != null &&
+        _draggingCardIndex == cardIndex) {
       return;
     }
 
-    final selectedCard = before.humanHand[selectedIndex];
-
-    ref.read(gameProvider.notifier).playOnPile(targetPile);
+    final selectedCard = before.humanHand[cardIndex];
+    final didSucceed = ref
+        .read(gameProvider.notifier)
+        .playCardAtIndex(cardIndex, targetPile);
     final after = ref.read(gameProvider);
-    final didSucceed = _didHumanPlaySucceed(before, after);
 
     if (!didSucceed) {
       final messenger = ScaffoldMessenger.of(context);
@@ -214,7 +240,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       );
 
       setState(() {
-        _invalidShakeCardIndex = selectedIndex;
+        _invalidShakeCardIndex = cardIndex;
         _invalidShakeEpoch += 1;
       });
       return;
@@ -233,8 +259,9 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     _startHumanPlacementAnimation(
       card: selectedCard,
       targetPile: targetPile,
-      selectedIndex: selectedIndex,
+      cardIndex: cardIndex,
       handCountBeforePlay: before.humanHand.length,
+      isSelected: !isDragSource,
     );
 
     final drawnCard = _extractHumanDrawnCard(before, after);
@@ -252,6 +279,35 @@ class _GameScreenState extends ConsumerState<GameScreen> {
       destinationIndex: destinationIndex,
       handCountAfterDraw: after.humanHand.length,
     );
+  }
+
+  void _onCenterPileTap(CenterPile targetPile) {
+    final state = ref.read(gameProvider);
+    final selectedIndex = state.selectedCardIndex;
+    if (selectedIndex == null) {
+      return;
+    }
+    _attemptHumanPlay(selectedIndex, targetPile);
+  }
+
+  void _onCardDragStarted(int cardIndex) {
+    setState(() {
+      _draggingCardIndex = cardIndex;
+    });
+  }
+
+  void _onCardDragEnd() {
+    setState(() {
+      _draggingCardIndex = null;
+    });
+  }
+
+  void _onCardDropOnPile(HandCardDragData data, CenterPile targetPile) {
+    final state = ref.read(gameProvider);
+    if (data.tickId != state.tickId) {
+      return;
+    }
+    _attemptHumanPlay(data.cardIndex, targetPile, isDragSource: true);
   }
 
   void _onGameStateChanged(GameState? previous, GameState next) {
@@ -398,16 +454,17 @@ class _GameScreenState extends ConsumerState<GameScreen> {
   void _startHumanPlacementAnimation({
     required PlayingCard card,
     required CenterPile targetPile,
-    required int selectedIndex,
+    required int cardIndex,
     required int handCountBeforePlay,
+    required bool isSelected,
   }) {
     final cardSize = _currentCardSize();
     final from = _humanHandCardOffset(
-      cardIndex: selectedIndex,
+      cardIndex: cardIndex,
       handCount: handCountBeforePlay,
       cardWidth: cardSize.width,
       cardHeight: cardSize.height,
-      isSelected: true,
+      isSelected: isSelected,
     );
     final to = _centerPileCardOffset(
       targetPile,
@@ -983,11 +1040,4 @@ String _resultText(GameResult? result, AppLocale locale) {
     GameResult.draw => AppStrings.get(locale, 'result_draw'),
     null => AppStrings.get(locale, 'phase_finished'),
   };
-}
-
-bool _didHumanPlaySucceed(GameState before, GameState after) {
-  return before.humanHand != after.humanHand ||
-      before.humanDrawPile != after.humanDrawPile ||
-      before.centerLeftPile != after.centerLeftPile ||
-      before.centerRightPile != after.centerRightPile;
 }

@@ -40,18 +40,34 @@ class GameNotifier extends Notifier<GameState> {
     if (selectedCardIndex == null) {
       return;
     }
+    playCardAtIndex(selectedCardIndex, targetPile);
+  }
+
+  /// Read-only check: can card at [cardIndex] be played on [targetPile]?
+  bool canPlayCardAtIndexOnPile(int cardIndex, CenterPile targetPile) {
+    return canPlayCard(state, cardIndex, targetPile);
+  }
+
+  /// Play the card at [cardIndex] on [targetPile]. Returns true on success.
+  /// Does not depend on selectedCardIndex and is intended for drag-and-drop.
+  bool playCardAtIndex(int cardIndex, CenterPile targetPile) {
+    if (state.phase != GamePhase.playing) {
+      return false;
+    }
+    if (cardIndex < 0 || cardIndex >= state.humanHand.length) {
+      return false;
+    }
 
     final previous = state;
-    state = reduce(
-      state,
-      PlayCard(Player.human, selectedCardIndex, targetPile),
-    );
+    state = reduce(state, PlayCard(Player.human, cardIndex, targetPile));
 
     if (_didHumanPlaySucceed(previous, state)) {
       state = reduce(state, const DeselectCard());
       _checkGameEnd();
       _restartCpuTimer();
+      return true;
     }
+    return false;
   }
 
   /// Called by CPU timer - applies CPU move.

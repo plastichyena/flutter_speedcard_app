@@ -96,6 +96,51 @@ GameState resolveTick(GameState state, List<GameEvent> events) {
   return nextState;
 }
 
+/// Returns true if the human player's card at [cardIndex] can be legally
+/// played on [targetPile].
+/// Pure read-only check — does not mutate state.
+bool canPlayCard(GameState state, int cardIndex, CenterPile targetPile) {
+  return _canPlayCardForPlayer(
+    state: state,
+    player: Player.human,
+    cardIndex: cardIndex,
+    targetPile: targetPile,
+  );
+}
+
+bool _canPlayCardForPlayer({
+  required GameState state,
+  required Player player,
+  required int cardIndex,
+  required CenterPile targetPile,
+}) {
+  if (state.phase != GamePhase.playing) {
+    return false;
+  }
+
+  final hand = player == Player.human ? state.humanHand : state.cpuHand;
+  if (cardIndex < 0 || cardIndex >= hand.length) {
+    return false;
+  }
+
+  final fieldCard = _fieldCardForPile(state, targetPile);
+  if (fieldCard == null) {
+    return false;
+  }
+
+  return isAdjacent(hand[cardIndex].rank, fieldCard.rank);
+}
+
+PlayingCard? _fieldCardForPile(GameState state, CenterPile targetPile) {
+  final pile = targetPile == CenterPile.left
+      ? state.centerLeftPile
+      : state.centerRightPile;
+  if (pile.isEmpty) {
+    return null;
+  }
+  return pile.last;
+}
+
 GameState _drawCard(GameState state, Player player) {
   final hand = List<PlayingCard>.from(
     player == Player.human ? state.humanHand : state.cpuHand,
@@ -125,31 +170,25 @@ GameState _playCard(
       ? state.copyWith(tickId: state.tickId + 1)
       : state;
 
-  if (baseState.phase != GamePhase.playing) {
+  if (!_canPlayCardForPlayer(
+    state: baseState,
+    player: event.player,
+    cardIndex: event.cardIndex,
+    targetPile: event.targetPile,
+  )) {
     return baseState;
   }
 
   final hand = List<PlayingCard>.from(
     event.player == Player.human ? baseState.humanHand : baseState.cpuHand,
   );
-  if (event.cardIndex < 0 || event.cardIndex >= hand.length) {
-    return baseState;
-  }
-
   final centerPile = List<PlayingCard>.from(
     event.targetPile == CenterPile.left
         ? baseState.centerLeftPile
         : baseState.centerRightPile,
   );
-  if (centerPile.isEmpty) {
-    return baseState;
-  }
 
   final playedCard = hand[event.cardIndex];
-  final fieldRank = centerPile.last.rank;
-  if (!isAdjacent(playedCard.rank, fieldRank)) {
-    return baseState;
-  }
 
   hand.removeAt(event.cardIndex);
   centerPile.add(playedCard);

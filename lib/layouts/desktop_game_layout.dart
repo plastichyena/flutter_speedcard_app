@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speedcard_app/logic/card_utils.dart';
 import 'package:flutter_speedcard_app/models/card.dart';
 import 'package:flutter_speedcard_app/models/enums.dart';
-import 'package:flutter_speedcard_app/models/game_state.dart';
+import 'package:flutter_speedcard_app/models/hand_card_drag_data.dart';
 import 'package:flutter_speedcard_app/providers/game_provider.dart';
 import 'package:flutter_speedcard_app/theme/app_theme.dart';
 import 'package:flutter_speedcard_app/widgets/card_hand.dart';
@@ -25,6 +25,11 @@ class DesktopGameLayout extends ConsumerWidget {
     this.rightCenterPileKey,
     this.shakeCardIndex,
     this.shakeEpoch = 0,
+    this.draggingCardIndex,
+    this.tickId = 0,
+    this.onCardDragStarted,
+    this.onCardDragEnd,
+    this.onCardDropOnPile,
   });
 
   final AppLocale locale;
@@ -38,6 +43,11 @@ class DesktopGameLayout extends ConsumerWidget {
   final Key? rightCenterPileKey;
   final int? shakeCardIndex;
   final int shakeEpoch;
+  final int? draggingCardIndex;
+  final int tickId;
+  final ValueChanged<int>? onCardDragStarted;
+  final VoidCallback? onCardDragEnd;
+  final void Function(HandCardDragData data, CenterPile pile)? onCardDropOnPile;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,7 +57,8 @@ class DesktopGameLayout extends ConsumerWidget {
     final screenWidth = MediaQuery.sizeOf(context).width;
     final cardWidth = AppTheme.cardWidthForScreen(screenWidth);
     final cardHeight = AppTheme.cardHeightForScreen(screenWidth);
-    final selectedCard = _selectedCard(state);
+    final effectiveCardIndex = draggingCardIndex ?? state.selectedCardIndex;
+    final selectedCard = _cardAtIndex(state.humanHand, effectiveCardIndex);
     final leftFieldCard =
         cpuAnimatingPile == CenterPile.left && state.centerLeftPile.length >= 2
         ? state.centerLeftPile[state.centerLeftPile.length - 2]
@@ -94,6 +105,16 @@ class DesktopGameLayout extends ConsumerWidget {
                       onTap: canPlay
                           ? () => onCenterPileTap(CenterPile.left)
                           : null,
+                      onWillAcceptDrag: canPlay
+                          ? (data) => notifier.canPlayCardAtIndexOnPile(
+                              data.cardIndex,
+                              CenterPile.left,
+                            )
+                          : null,
+                      onAcceptDrag: canPlay
+                          ? (data) =>
+                                onCardDropOnPile?.call(data, CenterPile.left)
+                          : null,
                       cardWidth: cardWidth,
                       cardHeight: cardHeight,
                     ),
@@ -104,6 +125,16 @@ class DesktopGameLayout extends ConsumerWidget {
                       isValidTarget: rightIsValid,
                       onTap: canPlay
                           ? () => onCenterPileTap(CenterPile.right)
+                          : null,
+                      onWillAcceptDrag: canPlay
+                          ? (data) => notifier.canPlayCardAtIndexOnPile(
+                              data.cardIndex,
+                              CenterPile.right,
+                            )
+                          : null,
+                      onAcceptDrag: canPlay
+                          ? (data) =>
+                                onCardDropOnPile?.call(data, CenterPile.right)
                           : null,
                       cardWidth: cardWidth,
                       cardHeight: cardHeight,
@@ -134,6 +165,11 @@ class DesktopGameLayout extends ConsumerWidget {
                           notifier.selectCard(index);
                         }
                       : null,
+                  enableDrag: canPlay,
+                  tickId: tickId,
+                  draggingCardIndex: draggingCardIndex,
+                  onDragStarted: onCardDragStarted,
+                  onDragEnd: onCardDragEnd,
                   cardWidth: cardWidth,
                   cardHeight: cardHeight,
                 ),
@@ -148,15 +184,14 @@ class DesktopGameLayout extends ConsumerWidget {
   }
 }
 
-PlayingCard? _selectedCard(GameState state) {
-  final selectedIndex = state.selectedCardIndex;
-  if (selectedIndex == null) {
+PlayingCard? _cardAtIndex(List<PlayingCard> cards, int? cardIndex) {
+  if (cardIndex == null) {
     return null;
   }
-  if (selectedIndex < 0 || selectedIndex >= state.humanHand.length) {
+  if (cardIndex < 0 || cardIndex >= cards.length) {
     return null;
   }
-  return state.humanHand[selectedIndex];
+  return cards[cardIndex];
 }
 
 bool _isValidTarget(PlayingCard? selectedCard, PlayingCard? fieldCard) {
