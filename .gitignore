@@ -6,4 +6,32 @@ Doc/
 .mcp.json
 AGENTS.md
 CLAUDE.md
-build/test_cache/build/fa875cea96ff9eb23bebfb51f104f901.cache.dill.track.dill
+build/test_cache/
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.pub/
+.pub-cache/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+
+# Web
+web/generated_plugin_registrant.dart
+
+# Env
+.env
+.env.*
